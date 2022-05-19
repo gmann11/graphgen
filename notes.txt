@@ -1,0 +1,17 @@
+batch size doesn't seem to be working
+getting weird results from everything
+
+
+this creates 3 nodes:
+"GRAPH.QUERY" "jren" "CREATE (xRMGtXBInj:site{name:"Site A"}),(bCtjMpjeDu:site{name:"Site B"}),(hQjeepPirP:site{name:"Site C"})" "--compact"
+
+
+
+go run main.go create -a 4 -p 10 -s 3
+18:23:05.491[0 172.17.0.1:57600]
+
+"GRAPH.QUERY" "jren" "CREATE 
+(product7:product{attribute003:"malleableness",guideID:"7",attribute001:"4831389563158288344",attribute002:"0.15832827774512764"}),
+(qFAjTLVcrx:product{attribute001:"732830328053361739",attribute002:"0.05912065131387529",attribute003:"algoristic",guideID:"8"}),
+(PnYEBjMhLt:product{guideID:"10",attribute001:"4893789450120281907",attribute002:"0.28208099496492467",attribute003:"surfusion"}),
+(cNYbtIFqSV:site{name:"site-01"}),(osMcUlVNHb:product{guideID:"3",attribute001:"4751997750760398084",attribute002:"0.21426387258237492",attribute003:"orchidoptosis"}),(PvKRqXrcRg:product{guideID:"6",attribute001:"2740103009342231109",attribute002:"0.2065826619136986",attribute003:"talalgia"}),(RiZLPBdlQR:product{guideID:"2",attribute001:"6334824724549167320",attribute002:"0.15651925473279124",attribute003:"luigino"}),(HxMoFyZuNB:product{attribute001:"4324745483838182873",attribute002:"0.29310185733681576",attribute003:"pulmonate",guideID:"4"}),(kPOpcJsNnC:product{attribute003:"marengo",guideID:"5",attribute001:"1874068156324778273",attribute002:"0.5706732760710226"}),(pFZHnAnDcN:product{attribute001:"1598098976185383115",attribute002:"0.544155573000885",attribute003:"gastrolienal",guideID:"9"}),(NYbxLIEmjb:site{name:"site-02"}),(rRnfhKhjrd:site{name:"site-03"}),(OEYlqjPwQY:product{guideID:"1",attribute001:"5577006791947779410",attribute002:"0.6645600532184904",attribute003:"tautopodic"})" "--compact"
