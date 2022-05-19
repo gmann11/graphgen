@@ -1,9 +1,13 @@
 batch size doesn't seem to be working
 getting weird results from everything
+j
+10:12:23.296[0 172.17.0.1:58596]"GRAPH.QUERY" "jren" "CREATE (:site {id:0,a1:56,a2:0.30,a3:'jumpable'})"
+10:12:23.305[0 172.17.0.1:58598]"GRAPH.QUERY" "jren" "CREATE (:product {a03:'rering',id:0,a01:11,a02:0.38})"
+
+GRAPH.QUERY jren "CREATE (:product {a03:'rering',id:0,a01:11,a02:0.38})-[:cached]->(:site {id:0})
 
 
-this creates 3 nodes:
-"GRAPH.QUERY" "jren" "CREATE (xRMGtXBInj:site{name:"Site A"}),(bCtjMpjeDu:site{name:"Site B"}),(hQjeepPirP:site{name:"Site C"})" "--compact"
+127.0.0.1:6379> GRAPH.QUERY MotoGP "CREATE (:Rider {name:'Valentino Rossi'})-[:rides]->(:Team {name:'Yamaha'}), (:Rider {name:'Dani Pedrosa'})-[:rides]->(:Team {name:'Honda'}), (:Rider {name:'Andrea Dovizioso'})-[:rides]->(:Team {name:'Ducati'})"
 
 
 

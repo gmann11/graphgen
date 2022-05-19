@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -14,14 +15,39 @@ func GenerateGraph(siteCount, productCount, attributeCount, batchSize int, redis
 		fmt.Println("running the neo4j inserts")
 		sendSiteNodes(siteCount, Neo4jSender, batchSize)
 		sendProductNodes(productCount, attributeCount, Neo4jSender, batchSize, workers)
+		sendProductEdges(productCount, siteCount, Neo4jSender)
+		sendSiteEdges(siteCount, Neo4jSender)
 	}
 
 	if redis {
 		fmt.Println("running the redis inserts")
 		sendSiteNodes(siteCount, RedisSender, batchSize)
 		sendProductNodes(productCount, attributeCount, RedisSender, batchSize, workers)
+		sendProductEdges(productCount, siteCount, RedisSender)
 	}
 
+}
+func sendProductEdges(productCount, siteCount int, writer func(string, string)) {
+	for i := 0; i < productCount; i++ {
+		for _, s := range rand.Perm(siteCount)[:rand.Intn(4)+1] {
+			cypherQuery := linkProductsToSites(i, s)
+			writer("MATCH", cypherQuery)
+		}
+	}
+}
+
+func sendSiteEdges(siteCount int, writer func(string, string)) {
+	for i := 0; i < siteCount; i++ {
+
+		sites := makeRange(0, siteCount-1)
+		sites = remove(sites, i)
+		rand.Shuffle(len(sites), func(i, j int) { sites[i], sites[j] = sites[j], sites[i] })
+
+		for _, s := range sites[:rand.Intn(4)+1] {
+			cypherQuery := linkSitesToSites(i, s)
+			writer("MATCH", cypherQuery)
+		}
+	}
 }
 
 func sendSiteNodes(s int, writer func(string, string), batchSize int) {

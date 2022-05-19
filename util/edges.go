@@ -5,14 +5,11 @@ import (
 	"math/rand"
 )
 
-// GRAPH.QUERY movies "MATCH (s:site),(p:product) WHERE s.siteID = 1 AND p.productID = 1 CREATE (s)-[r:cached {role:'Luke Skywalker'}]->(p) RETURN r"
+// MATCH (s:site),(p:product) WHERE s.id=0 AND p.id = 7 CREATE (s)-[:cached]->(p)
 
-func CreateProductEdge(n, siteCount, productCount int) string {
+func linkProductsToSites(id, site int) string {
 
 	edge := make(map[string]interface{})
-
-	// add the site id
-	edge["id"] = fmt.Sprintf("%v", n)
 
 	// add an int
 	edge["a1"] = fmt.Sprintf("%d", rand.Int31n(100))
@@ -23,8 +20,23 @@ func CreateProductEdge(n, siteCount, productCount int) string {
 	// add a string
 	edge["a3"] = fmt.Sprintf("'%v'", randomWord())
 
-	// return fmt.Sprintf("(:site {%v}),", mapToCypher(edge))
+	return fmt.Sprintf("(p:product),(s:site) WHERE p.id=%v AND s.id=%v CREATE (p)-[r:cached {%v}]->(s)", id, site, mapToCypher(edge))
 
-	return "(p:product),(s:site) WHERE p.id=1 AND s.id=1 CREATE (p)-[r:cached {}]->(s)"
+}
+
+func linkSitesToSites(id, site int) string {
+
+	edge := make(map[string]interface{})
+
+	// add an int
+	edge["a1"] = fmt.Sprintf("%d", rand.Int31n(100))
+
+	// add a float
+	edge["a2"] = fmt.Sprintf("%.2f", rand.Float32())
+
+	// add a string
+	edge["a3"] = fmt.Sprintf("'%v'", randomWord())
+
+    return fmt.Sprintf("(ss:site),(ds:site) WHERE ss.id=%v AND ds.id=%v CREATE (ss)-[r:connected {%v}]->(ds)", id, site, mapToCypher(edge))
 
 }
