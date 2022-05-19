@@ -8,10 +8,10 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func RedisSender(operation, cypherQuery string) {
+func RedisSender(operation, cypherQuery, endpoint string) {
 	ctx := context.Background()
 	rdb := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: fmt.Sprintf("%v:6379", endpoint),
 	})
 
 	err := rdb.Do(ctx,

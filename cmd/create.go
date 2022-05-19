@@ -21,6 +21,8 @@ var createCmd = &cobra.Command{
 		redis, _ := cmd.Flags().GetBool("redis")
 		neo4j, _ := cmd.Flags().GetBool("neo4j")
 		workers, _ := cmd.Flags().GetInt("workers")
+		redisep, _ := cmd.Flags().GetString("redisEndpoint")
+		neo4jep, _ := cmd.Flags().GetString("neo4jEndpoint")
 
 		log.Println("creating a graph with the following parameters")
 		fmt.Println("sites", sites)
@@ -30,8 +32,10 @@ var createCmd = &cobra.Command{
 		fmt.Println("workers", workers)
 		fmt.Println("redis", redis)
 		fmt.Println("neo4j", neo4j)
+		fmt.Println("redisEndpoint", redisep)
+		fmt.Println("neo4jEndpoint", neo4jep)
 
-		util.GenerateGraph(sites, products, attributes, batchSize, redis, neo4j, workers)
+		util.GenerateGraph(sites, products, attributes, batchSize, redis, neo4j, workers, redisep, neo4jep)
 	},
 }
 
@@ -44,5 +48,7 @@ func init() {
 	createCmd.Flags().Bool("redis", true, "send to redis")
 	createCmd.Flags().Bool("neo4j", true, "send to neo4j")
 	createCmd.Flags().IntP("workers", "w", 4, "size of worker pool")
+	createCmd.Flags().StringP("redisEndpoint", "r", "localhost", "endpoint for redis")
+	createCmd.Flags().StringP("neo4jEndpoint", "n", "localhost", "endpoint for neo4j")
 
 }

@@ -9,34 +9,35 @@ import (
 	"time"
 )
 
-func GenerateGraph(siteCount, productCount, attributeCount, batchSize int, redis, neo4j bool, workers int) {
+func GenerateGraph(siteCount, productCount, attributeCount, batchSize int, redis, neo4j bool, workers int, redisEndpoint, neo4jEndpoint string) {
 
 	if neo4j {
 		fmt.Println("running the neo4j inserts")
-		sendSiteNodes(siteCount, Neo4jSender, batchSize)
-		sendProductNodes(productCount, attributeCount, Neo4jSender, batchSize, workers)
-		sendProductEdges(productCount, siteCount, Neo4jSender)
-		sendSiteEdges(siteCount, Neo4jSender)
+		sendSiteNodes(siteCount, batchSize, Neo4jSender, neo4jEndpoint)
+		sendProductNodes(productCount, attributeCount, batchSize, workers, Neo4jSender, neo4jEndpoint)
+		sendProductEdges(productCount, siteCount, Neo4jSender, neo4jEndpoint)
+		sendSiteEdges(siteCount, Neo4jSender, neo4jEndpoint)
 	}
 
 	if redis {
 		fmt.Println("running the redis inserts")
-		sendSiteNodes(siteCount, RedisSender, batchSize)
-		sendProductNodes(productCount, attributeCount, RedisSender, batchSize, workers)
-		sendProductEdges(productCount, siteCount, RedisSender)
+		sendSiteNodes(siteCount, batchSize, RedisSender, redisEndpoint)
+		sendProductNodes(productCount, attributeCount, batchSize, workers, RedisSender, redisEndpoint)
+		sendProductEdges(productCount, siteCount, RedisSender, redisEndpoint)
+		sendSiteEdges(siteCount, RedisSender, redisEndpoint)
 	}
 
 }
-func sendProductEdges(productCount, siteCount int, writer func(string, string)) {
+func sendProductEdges(productCount, siteCount int, writer func(string, string, string), endpoint string) {
 	for i := 0; i < productCount; i++ {
 		for _, s := range rand.Perm(siteCount)[:rand.Intn(4)+1] {
 			cypherQuery := linkProductsToSites(i, s)
-			writer("MATCH", cypherQuery)
+			writer("MATCH", cypherQuery, endpoint)
 		}
 	}
 }
 
-func sendSiteEdges(siteCount int, writer func(string, string)) {
+func sendSiteEdges(siteCount int, writer func(string, string, string), endpoint string) {
 	for i := 0; i < siteCount; i++ {
 
 		sites := makeRange(0, siteCount-1)
@@ -45,12 +46,12 @@ func sendSiteEdges(siteCount int, writer func(string, string)) {
 
 		for _, s := range sites[:rand.Intn(4)+1] {
 			cypherQuery := linkSitesToSites(i, s)
-			writer("MATCH", cypherQuery)
+			writer("MATCH", cypherQuery, endpoint)
 		}
 	}
 }
 
-func sendSiteNodes(s int, writer func(string, string), batchSize int) {
+func sendSiteNodes(s int, batchSize int, writer func(string, string, string), endpoint string) {
 
 	var wg sync.WaitGroup
 
@@ -72,19 +73,19 @@ func sendSiteNodes(s int, writer func(string, string), batchSize int) {
 		for cypher := range cypherChan {
 
 			if counter >= batchSize {
-				writer("CREATE", sliceToCypher(batch))
+				writer("CREATE", sliceToCypher(batch), endpoint)
 				batch = []string{}
 				counter = 0
 			}
 			batch = append(batch, cypher)
 			counter += 1
 		}
-		writer("CREATE", sliceToCypher(batch))
+		writer("CREATE", sliceToCypher(batch), endpoint)
 	}()
 	wg.Wait()
 }
 
-func sendProductNodes(productCount, attributeCount int, writer func(string, string), batchSize int, workers int) {
+func sendProductNodes(productCount, attributeCount, batchSize, workers int, writer func(string, string, string), endpoint string) {
 
 	var wg sync.WaitGroup
 
@@ -130,7 +131,7 @@ func sendProductNodes(productCount, attributeCount int, writer func(string, stri
 				batchCounter += 1
 
 				if batchCounter >= batchSize {
-					writer("CREATE", sliceToCypher(batch))
+					writer("CREATE", sliceToCypher(batch), endpoint)
 					batch = []string{}
 					batchCounter = 0
 				}
@@ -138,7 +139,7 @@ func sendProductNodes(productCount, attributeCount int, writer func(string, stri
 			}
 			// send any remaining products
 			if len(batch) > 0 {
-				writer("CREATE", sliceToCypher(batch))
+				writer("CREATE", sliceToCypher(batch), endpoint)
 			}
 		}()
 	}

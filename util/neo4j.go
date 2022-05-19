@@ -7,8 +7,8 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 )
 
-func Neo4jSender(operation, cypherQuery string) {
-	driver, err := neo4j.NewDriver("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "test", ""))
+func Neo4jSender(operation, cypherQuery, endpoint string) {
+	driver, err := neo4j.NewDriver(fmt.Sprintf("neo4j://%v:7687", endpoint), neo4j.BasicAuth("neo4j", "test", ""))
 	if err != nil {
 		log.Panic(err)
 	}
