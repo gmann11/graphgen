@@ -5,7 +5,7 @@ COPY . .
 RUN go build -o main main.go
 
 # run stage
-FROM alpine:latest as deploy
+FROM alpine:latest as test
 WORKDIR /app
 COPY --from=builder /app/main .
 COPY words .
