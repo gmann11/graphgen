@@ -4,10 +4,16 @@ WORKDIR /app
 COPY . .
 RUN go build -o main main.go
 
-# run stage
+# test
 FROM alpine:latest as test
 WORKDIR /app
 COPY --from=builder /app/main .
 COPY words .
+ENTRYPOINT [ "/app/main" ]
 
+# deploy
+FROM alpine:latest as deploy
+WORKDIR /app
+COPY --from=builder /app/main .
+COPY words .
 ENTRYPOINT [ "/app/main" ]
