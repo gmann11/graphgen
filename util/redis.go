@@ -8,18 +8,28 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func RedisSender(operation, cypherQuery, endpoint string) {
+func redisSender(cypherChan chan (string), endpoint string) {
 	ctx := context.Background()
 	rdb := redis.NewClient(&redis.Options{
 		Addr: fmt.Sprintf("%v:6379", endpoint),
 	})
 
-	err := rdb.Do(ctx,
-		"GRAPH.QUERY",
-		"jren",
-		fmt.Sprintf("%v %v", operation, cypherQuery),
-	).Err()
+	// test redis connection
+	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
-		log.Println("error execing pipeline", err)
+		log.Fatal("could not connect to redis streams endpoint", err)
+	}
+	fmt.Println("redis client connected to", endpoint)
+
+	// send cypher queries send via channel
+	for cypherQuery := range cypherChan {
+		err := rdb.Do(ctx,
+			"GRAPH.QUERY",
+			"jren",
+			fmt.Sprintf("%v", cypherQuery),
+		).Err()
+		if err != nil {
+			log.Println("redis error executing pipeline", err)
+		}
 	}
 }

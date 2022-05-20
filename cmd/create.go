@@ -35,7 +35,7 @@ var createCmd = &cobra.Command{
 		fmt.Println("redisEndpoint", redisep)
 		fmt.Println("neo4jEndpoint", neo4jep)
 
-		util.GenerateGraph(sites, products, attributes, batchSize, redis, neo4j, workers, redisep, neo4jep)
+		util.GenerateGraph(cmd)
 	},
 }
 

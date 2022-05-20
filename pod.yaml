@@ -1,0 +1,11 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: graphgen-redis
+  namespace: jren
+spec:
+  restartPolicy: Never
+  containers:
+    - name: graphgen
+      image: "registry.deepskylab.io:5050/jren/ledger/graph-generator:main-test"
+      args: ["create", "neo4j=false", "-r", "redis"]

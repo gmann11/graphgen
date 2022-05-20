@@ -2,148 +2,101 @@ package util
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
-	"sync"
-	"sync/atomic"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
-func GenerateGraph(siteCount, productCount, attributeCount, batchSize int, redis, neo4j bool, workers int, redisEndpoint, neo4jEndpoint string) {
+func GenerateGraph(cmd *cobra.Command) {
 
-	if neo4j {
-		fmt.Println("running the neo4j inserts")
-		sendSiteNodes(siteCount, batchSize, Neo4jSender, neo4jEndpoint)
-		sendProductNodes(productCount, attributeCount, batchSize, workers, Neo4jSender, neo4jEndpoint)
-		sendProductEdges(productCount, siteCount, Neo4jSender, neo4jEndpoint)
-		sendSiteEdges(siteCount, Neo4jSender, neo4jEndpoint)
-	}
+	redis, _ := cmd.Flags().GetBool("redis")
+	neo4j, _ := cmd.Flags().GetBool("neo4j")
 
 	if redis {
-		fmt.Println("running the redis inserts")
-		sendSiteNodes(siteCount, batchSize, RedisSender, redisEndpoint)
-		sendProductNodes(productCount, attributeCount, batchSize, workers, RedisSender, redisEndpoint)
-		sendProductEdges(productCount, siteCount, RedisSender, redisEndpoint)
-		sendSiteEdges(siteCount, RedisSender, redisEndpoint)
+		redisEndpoint, _ := cmd.Flags().GetString("redisEndpoint")
+		insertData(cmd, "redis", redisSender, redisEndpoint)
+	}
+	if neo4j {
+		neo4jEndpoint, _ := cmd.Flags().GetString("neo4jEndpoint")
+		insertData(cmd, "neo4j", neo4jSender, neo4jEndpoint)
 	}
 
 }
-func sendProductEdges(productCount, siteCount int, writer func(string, string, string), endpoint string) {
+
+func insertData(cmd *cobra.Command, name string, sender func(chan (string), string), endpoint string) {
+	workers, _ := cmd.Flags().GetInt("workers")
+
+	jobStart := time.Now()
+	fmt.Printf("running the %v inserts\n", name)
+
+	cypherChan := make(chan (string))
+	// fire up X amount of redis senders
+	for i := 0; i < workers; i++ {
+
+		// will close when channel closes
+		go sender(cypherChan, endpoint)
+
+	}
+
+	time.Sleep(time.Second)
+	// site nodes
+	siteCount, _ := cmd.Flags().GetInt("sites")
+	fmt.Printf("%v: creating site nodes\n", name)
+	start := time.Now()
+	for i := 0; i < siteCount; i++ {
+		cypherChan <- createSite(i)
+	}
+	fmt.Printf("%v: %v nodes inserted in %v\n", name, siteCount, time.Since(start))
+
+	// product nodes
+	productCount, _ := cmd.Flags().GetInt("products")
+	attributeCount, _ := cmd.Flags().GetInt("attributes")
+	fmt.Printf("%v: creating product nodes\n", name)
+	start = time.Now()
 	for i := 0; i < productCount; i++ {
-		for _, s := range rand.Perm(siteCount)[:rand.Intn(4)+1] {
-			cypherQuery := linkProductsToSites(i, s)
-			writer("MATCH", cypherQuery, endpoint)
-		}
+		cypherChan <- createProduct(i, attributeCount)
 	}
-}
+	duration := time.Since(start)
+	eps := float64(productCount) / duration.Seconds()
+	fmt.Printf("%v: %v nodes inserted in %v %.2f\n", name, productCount, duration, eps)
 
-func sendSiteEdges(siteCount int, writer func(string, string, string), endpoint string) {
+	// site edges
+	fmt.Printf("%v: linking sites to sites\n", name)
+	start = time.Now()
+	counter := 0
 	for i := 0; i < siteCount; i++ {
 
+		// create a sequence of ints [0,1,2,3...]
 		sites := makeRange(0, siteCount-1)
+		// remove self
 		sites = remove(sites, i)
+		//shuffle the output
 		rand.Shuffle(len(sites), func(i, j int) { sites[i], sites[j] = sites[j], sites[i] })
 
-		for _, s := range sites[:rand.Intn(4)+1] {
-			cypherQuery := linkSitesToSites(i, s)
-			writer("MATCH", cypherQuery, endpoint)
-		}
-	}
-}
-
-func sendSiteNodes(s int, batchSize int, writer func(string, string, string), endpoint string) {
-
-	var wg sync.WaitGroup
-
-	cypherChan := make(chan (string))
-
-	go func() {
-		for i := 0; i < s; i++ {
-			cypherChan <- CreateSite(i)
-		}
-		close(cypherChan)
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		var counter int
-		batch := []string{}
-		for cypher := range cypherChan {
-
-			if counter >= batchSize {
-				writer("CREATE", sliceToCypher(batch), endpoint)
-				batch = []string{}
-				counter = 0
-			}
-			batch = append(batch, cypher)
+		for _, s := range sites[:rand.Intn(4)+1] { //TODO hard-coded 4
+			cypherChan <- linkSitesToSites(i, s)
 			counter += 1
 		}
-		writer("CREATE", sliceToCypher(batch), endpoint)
-	}()
-	wg.Wait()
-}
-
-func sendProductNodes(productCount, attributeCount, batchSize, workers int, writer func(string, string, string), endpoint string) {
-
-	var wg sync.WaitGroup
-
-	cypherChan := make(chan (string))
-
-	var eps uint32
-	done := make(chan bool, 1)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-	Loop:
-		for {
-			select {
-			case <-done:
-				break Loop
-			case <-ticker.C:
-				log.Println("Events per second:", eps)
-				eps = 0
-			}
-		}
-	}()
-
-	// Producer
-	go func() {
-		for i := 0; i < productCount; i++ {
-			cypherChan <- CreateProduct(i, attributeCount)
-		}
-		close(cypherChan)
-	}()
-
-	// Consumer
-	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			var batchCounter int
-			batch := []string{}
-			for cypher := range cypherChan {
-				atomic.AddUint32(&eps, 1)
-
-				batch = append(batch, cypher)
-				batchCounter += 1
-
-				if batchCounter >= batchSize {
-					writer("CREATE", sliceToCypher(batch), endpoint)
-					batch = []string{}
-					batchCounter = 0
-				}
-
-			}
-			// send any remaining products
-			if len(batch) > 0 {
-				writer("CREATE", sliceToCypher(batch), endpoint)
-			}
-		}()
 	}
+	duration = time.Since(start)
+	eps = float64(counter) / duration.Seconds()
+	fmt.Printf("%v: %v edges inserted in %v %.2f\n", name, counter, duration, eps)
 
-	wg.Wait()
-	done <- true
+	// product edges
+	fmt.Printf("%v: linking products to sites\n", name)
+	start = time.Now()
+	counter = 0
+	for i := 0; i < productCount; i++ {
+		for _, s := range rand.Perm(siteCount)[:rand.Intn(4)+1] {
+			cypherChan <- linkProductsToSites(i, s)
+			counter += 1
+		}
+	}
+	duration = time.Since(start)
+	eps = float64(counter) / duration.Seconds()
+	fmt.Printf("%v: %v edges inserted in %v %.2f\n", name, counter, duration, eps)
+
+	fmt.Printf("%v: all nodes and edges inserted in %v\n\n", name, time.Since(jobStart))
+
 }
