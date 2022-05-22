@@ -38,8 +38,14 @@ func insertData(cmd *cobra.Command, name string, sender func(chan (string), stri
 		go sender(cypherChan, endpoint)
 
 	}
-
+	// wait for workers to start
 	time.Sleep(time.Second)
+
+	// create indexes
+	fmt.Printf("%v: creating indices\n", name)
+	cypherChan <- "CREATE INDEX FOR (s:site) ON (s.id)"
+	cypherChan <- "CREATE INDEX FOR (p:product) ON (p.id)"
+
 	// site nodes
 	siteCount, _ := cmd.Flags().GetInt("sites")
 	fmt.Printf("%v: creating site nodes\n", name)
