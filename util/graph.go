@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -43,8 +44,16 @@ func insertData(cmd *cobra.Command, name string, sender func(chan (string), stri
 
 	// create indexes
 	fmt.Printf("%v: creating indices\n", name)
-	cypherChan <- "CREATE INDEX FOR (s:site) ON (s.id)"
-	cypherChan <- "CREATE INDEX FOR (p:product) ON (p.id)"
+	// delete all nodes and relationships
+	cypherChan <- "MATCH (n) DETACH DELETE n"
+
+	// reset all indices
+	if name == "redis" {
+		cypherChan <- "CREATE INDEX FOR (s:site) ON (s.id)"
+	}
+	if name == "neo4j" {
+		cypherChan <- "CREATE INDEX IF NOT EXISTS FOR (p:product) ON (p.id)"
+	}
 
 	// site nodes
 	siteCount, _ := cmd.Flags().GetInt("sites")
@@ -54,18 +63,6 @@ func insertData(cmd *cobra.Command, name string, sender func(chan (string), stri
 		cypherChan <- createSite(i)
 	}
 	fmt.Printf("%v: %v nodes inserted in %v\n", name, siteCount, time.Since(start))
-
-	// product nodes
-	productCount, _ := cmd.Flags().GetInt("products")
-	attributeCount, _ := cmd.Flags().GetInt("attributes")
-	fmt.Printf("%v: creating product nodes\n", name)
-	start = time.Now()
-	for i := 0; i < productCount; i++ {
-		cypherChan <- createProduct(i, attributeCount)
-	}
-	duration := time.Since(start)
-	eps := float64(productCount) / duration.Seconds()
-	fmt.Printf("%v: %v nodes inserted in %v %.2f\n", name, productCount, duration, eps)
 
 	// site edges
 	fmt.Printf("%v: linking sites to sites\n", name)
@@ -80,28 +77,40 @@ func insertData(cmd *cobra.Command, name string, sender func(chan (string), stri
 		//shuffle the output
 		rand.Shuffle(len(sites), func(i, j int) { sites[i], sites[j] = sites[j], sites[i] })
 
-		for _, s := range sites[:rand.Intn(4)+1] { //TODO hard-coded 4
+		for _, s := range sites[:rand.Intn(2)+1] { //TODO hard-coded 4
 			cypherChan <- linkSitesToSites(i, s)
 			counter += 1
 		}
 	}
-	duration = time.Since(start)
-	eps = float64(counter) / duration.Seconds()
+	duration := time.Since(start)
+	eps := float64(counter) / duration.Seconds()
 	fmt.Printf("%v: %v edges inserted in %v %.2f\n", name, counter, duration, eps)
 
-	// product edges
-	fmt.Printf("%v: linking products to sites\n", name)
+	// Products
+	productCount, _ := cmd.Flags().GetInt("products")
+	attributeCount, _ := cmd.Flags().GetInt("attributes")
+	fmt.Printf("%v: creating product nodes\n", name)
+	countProducts := 0
+	countEdges := 0
 	start = time.Now()
-	counter = 0
 	for i := 0; i < productCount; i++ {
-		for _, s := range rand.Perm(siteCount)[:rand.Intn(4)+1] {
-			cypherChan <- linkProductsToSites(i, s)
-			counter += 1
+		matchCyphers := []string{}
+		createCyphers := []string{}
+		createCyphers = append(createCyphers, createProduct(i, attributeCount))
+		countProducts += 1
+
+		for siteAliasID, siteID := range rand.Perm(siteCount)[:rand.Intn(4)+1] {
+			matchCyphers = append(matchCyphers, createSiteMatch(siteAliasID, siteID))
+			createCyphers = append(createCyphers, createProductToSiteEdge(siteAliasID))
+			countEdges += 1
 		}
+
+		finalQuery := strings.Join(append(matchCyphers, createCyphers...), " ")
+		cypherChan <- finalQuery
 	}
 	duration = time.Since(start)
-	eps = float64(counter) / duration.Seconds()
-	fmt.Printf("%v: %v edges inserted in %v %.2f\n", name, counter, duration, eps)
+	eps = float64(productCount) / duration.Seconds()
+	fmt.Printf("%v: nodes:%v, edges:%v inserted in %v rate:%.2f\n", name, countProducts, countEdges, duration, eps)
 
 	fmt.Printf("%v: all nodes and edges inserted in %v\n\n", name, time.Since(jobStart))
 

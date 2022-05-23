@@ -5,8 +5,14 @@ import (
 	"math/rand"
 )
 
-// MATCH (s:site),(p:product) WHERE s.id=0 AND p.id = 7 CREATE (s)-[:cached]->(p)
-func linkProductsToSites(id, site int) string {
+// MATCH (s1:site) WHERE s1.id=33
+func createSiteMatch(siteAliasID, siteID int) string {
+	return fmt.Sprintf("MATCH (s%v:site) WHERE s%v.id=%v", siteAliasID, siteAliasID, siteID)
+}
+
+// uses aliases for sites
+// CREATE (s1)-[:cached]->(p)
+func createProductToSiteEdge(siteAliasID int) string {
 
 	edge := make(map[string]interface{})
 
@@ -19,7 +25,7 @@ func linkProductsToSites(id, site int) string {
 	// add a string
 	edge["a3"] = fmt.Sprintf("'%v'", randomWord())
 
-	return fmt.Sprintf("MATCH (p:product),(s:site) WHERE p.id=%v AND s.id=%v CREATE (p)-[r:cached {%v}]->(s)", id, site, mapToCypher(edge))
+	return fmt.Sprintf("CREATE (s%v)-[:cached {%v}]->(p)", siteAliasID, mapToCypher(edge))
 
 }
 
