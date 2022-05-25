@@ -1,11 +1,12 @@
 kind: Pod
 apiVersion: v1
 metadata:
-  name: graphgen-redis
+  name: graph
   namespace: jren
 spec:
   restartPolicy: Never
+  imagePullPolicy: Always
   containers:
     - name: graphgen
       image: "registry.deepskylab.io:5050/jren/ledger/graph-generator:main-test"
-      args: ["create", "neo4j=false", "-r", "redis"]
+      args: ["create", "-r", "redis", "-n", "neo4j-bolt", "-a", "36", "-w", "1", "-p", "100", "-s", "25"]
