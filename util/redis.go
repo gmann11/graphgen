@@ -11,7 +11,7 @@ import (
 func redisSender(cypherChan chan (string), endpoint string) {
 	ctx := context.Background()
 	rdb := redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%v:6379", endpoint),
+		Addr: fmt.Sprintf("%v", endpoint),
 	})
 
 	// test redis connection

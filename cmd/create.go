@@ -48,7 +48,7 @@ func init() {
 	createCmd.Flags().Bool("redis", true, "send to redis")
 	createCmd.Flags().Bool("neo4j", true, "send to neo4j")
 	createCmd.Flags().IntP("workers", "w", 4, "size of worker pool")
-	createCmd.Flags().StringP("redisEndpoint", "r", "localhost", "endpoint for redis")
+	createCmd.Flags().StringP("redisEndpoint", "r", "localhost:6379", "endpoint for redis")
 	createCmd.Flags().StringP("neo4jEndpoint", "n", "localhost", "endpoint for neo4j")
 
 }

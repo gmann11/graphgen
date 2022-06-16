@@ -30,10 +30,9 @@ func createSite(n int) string {
 
 func createProduct(id, attributes int) string {
 
-	// subtract 1 for the GUIDE ID
 	// any additional remaining attributes will be strings
-	d := (attributes - 1) / 3
-	r := (attributes - 1) % 3
+	d := attributes  / 3
+	r := attributes  % 3
 
 	product := make(map[string]interface{})
 
