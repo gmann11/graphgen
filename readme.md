@@ -37,13 +37,13 @@ Flags:
 
 ## local testing
 
-run redis:
+run neo4j:
 
 ```sh
 docker run --rm -p 7474:7474 -p 7687:7687 --env NEO4J_AUTH=neo4j/test neo4j:latest
 ```
 
-run neo4j:
+run redis:
 
 ```sh
 docker run --rm -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
