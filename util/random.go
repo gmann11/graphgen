@@ -18,19 +18,6 @@ func init() {
 	log.Printf("dictionary loaded with %v words", len(dictionary))
 }
 
-func remove(s []int, i int) []int {
-    s[i] = s[len(s)-1]
-    return s[:len(s)-1]
-}
-
-func makeRange(min, max int) []int {
-	a := make([]int, max-min+1)
-	for i := range a {
-		a[i] = min + i
-	}
-	return a
-}
-
 func readDictionary() ([]string, error) {
 	file, err := os.Open("words")
 	if err != nil {
@@ -49,6 +36,6 @@ func randomInt(min, max int64) int64 {
 	return min + rand.Int63n(max-min+1)
 }
 
-func randomWord() string {
+func RandomWord() string {
 	return dictionary[rand.Intn(len(dictionary))]
 }
