@@ -51,20 +51,38 @@ var createCmd = &cobra.Command{
 		cc.GenerateProductNodes(products, attributes)
 		cc.GenerateProductEdges(sites, products, productLinkage)
 
+		graphdbs := []*graphwriter.GraphWriter{}
+
+		if neo4j {
+			gw := graphwriter.NewGraphWriter(graphwriter.Neo4j, batchSize, neo4jep)
+			graphdbs = append(graphdbs, gw)
+		}
 		if redis {
+			gw := graphwriter.NewGraphWriter(graphwriter.Redis, batchSize, redisep)
+			graphdbs = append(graphdbs, gw)
+		}
+
+		for _, gw := range graphdbs {
 
 			start := time.Now()
+
+			log.Println("running test for", gw.Name)
 			// add site nodes
-			gw := graphwriter.NewGraphWriter(graphwriter.Redis, batchSize, redisep)
+			log.Println("inserting indexes")
+			gw.Write(cc.Indexes)
+			log.Println("inserting site nodes")
 			gw.Write(cc.SiteNodes)
+			log.Println("inserting product nodes")
 			gw.Write(cc.ProductNodes)
+			log.Println("inserting site edges")
 			gw.Write(cc.SiteEdges)
+			log.Println("inserting product edges")
 			gw.Write(cc.ProductEdges)
-
 			// finally
-			gw.Close()
-
-			fmt.Println("sent to redis in", time.Since(start))
+			results := gw.Close()
+			duration := time.Since(start)
+			eps := float64(results) / float64(duration.Seconds())
+			log.Println("sent", results, "in", time.Since(start), "eps", eps)
 		}
 	},
 }
@@ -74,9 +92,9 @@ func init() {
 	createCmd.Flags().IntP("sites", "s", 25, "number of sites")
 	createCmd.Flags().Int("siteLinkage", 4, "site linkage")
 	createCmd.Flags().Int("productLinkage", 4, "product linkage")
-	createCmd.Flags().IntP("products", "p", 10_000, "number of products")
+	createCmd.Flags().IntP("products", "p", 1000, "number of products")
 	createCmd.Flags().IntP("attributes", "a", 40, "number of attributes")
-	createCmd.Flags().IntP("batch", "b", 1000, "batch size")
+	createCmd.Flags().IntP("batch", "b", 100, "batch size")
 	createCmd.Flags().Bool("redis", true, "send to redis")
 	createCmd.Flags().Bool("neo4j", true, "send to neo4j")
 	createCmd.Flags().StringP("redisEndpoint", "r", "localhost:6379", "endpoint for redis")

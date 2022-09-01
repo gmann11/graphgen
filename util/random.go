@@ -2,8 +2,7 @@ package util
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
+	"io"
 	"math/rand"
 	"os"
 	"strings"
@@ -11,11 +10,9 @@ import (
 
 var dictionary []string
 
-const alphabet = "abcdefghijklmnopqrstuvwxyz"
-
 func init() {
 	dictionary, _ = readDictionary()
-	log.Printf("dictionary loaded with %v words", len(dictionary))
+	fmt.Printf("dictionary loaded with %v words\n", len(dictionary))
 }
 
 func readDictionary() ([]string, error) {
@@ -24,16 +21,12 @@ func readDictionary() ([]string, error) {
 		return nil, fmt.Errorf("couldn't find dictionary file %w", err)
 	}
 
-	bytes, err := ioutil.ReadAll(file)
+	bytes, err := io.ReadAll(file)
 	if err != nil {
 		panic(err)
 	}
 
 	return strings.Split(string(bytes), "\n"), nil
-}
-
-func randomInt(min, max int64) int64 {
-	return min + rand.Int63n(max-min+1)
 }
 
 func RandomWord() string {

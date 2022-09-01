@@ -17,15 +17,6 @@ func MapToCypher(m map[string]interface{}) string {
 	return stripLastChar(sb.String())
 }
 
-// func SliceToCypher(s []string) string {
-// 	var sb strings.Builder
-// 	for _, v := range s {
-// 		sb.WriteString(v)
-// 	}
-//
-// 	return stripLastChar(sb.String())
-// }
-
 func stripLastChar(s string) string {
 	if len(s) > 0 {
 		s = s[:len(s)-1]

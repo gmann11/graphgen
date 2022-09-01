@@ -9,15 +9,18 @@ type CypherCommands struct {
 	SiteEdges    []string
 	ProductNodes []string
 	ProductEdges []string
-	edges        []string
-	redisStart   float64
-	neo4jStart   float64
+	Indexes      []string
 }
 
 func NewCypherCommands() *CypherCommands {
 	fmt.Println("generating cypher commands in memory")
 
-	cc := CypherCommands{}
+	cc := CypherCommands{
+		Indexes: []string{
+			"CREATE INDEX FOR (s:site) ON (s.id)",
+			"CREATE INDEX FOR (p:product) ON (p.id)",
+		},
+	}
 	return &cc
 }
 
