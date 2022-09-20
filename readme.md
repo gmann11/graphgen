@@ -55,16 +55,18 @@ docker run \
     -v $BASE/import:/var/lib/neo4j/import \
     -v $BASE/plugins:/plugins \
     --env NEO4J_AUTH=neo4j/password \
-    --env NEO4J_dbms_memory_pagecache_size=2G \
-    --env NEO4J_dbms_memory_heap_initial__size=2G \
-    --env NEO4J_dbms_memory_heap_max__size=2G \
+    --env NEO4J_dbms_memory_pagecache_size=1G \
+    --env NEO4J_dbms_memory_heap_initial__size=512M \
+    --env NEO4J_dbms_memory_heap_max__size=512M \
     --env NEO4J_dbms_connector_bolt_advertised__address=${PUBIP}:7687 \
     --env NEO4J_dbms_connector_http_advertised__address=${PUBIP}:7474 \
     --env NEO4J_dbms_security_procedures_unrestricted=apoc.* \
     --env NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     --env NEO4J_dbms_logs_query_transaction__id.enabled=true \
     --env NEO4J_dbms_logs_query_enabled=OFF \
-
+    --env NEO4J_dbms_tx__log_rotation_retention__policy=false \
+    --name neo4j \
+    neo4j:4.4.10-community
 ```
 
 run redis:
