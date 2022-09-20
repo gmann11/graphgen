@@ -10,52 +10,56 @@ import (
 
 // createProduct generates a CREATE cypher command for a product
 // attributes are split 1/3 ints, 1/3 floats, 1/3 strings
-func createProduct(id, attributes int) string {
+func createProduct(id, attributes int) map[string]interface{} {
 	product := make(map[string]interface{})
 
 	d := attributes / 3
 	r := attributes % 3
 
 	// add the guideID
-	product["id"] = fmt.Sprintf("%v", id)
-	product["countryCode"] = fmt.Sprintf("'%v'", gofakeit.CountryAbr())
+	product["id"] = id
+	product["countryCode"] = gofakeit.CountryAbr()
 	product["longitude"] = gofakeit.Longitude()
 	product["latitude"] = gofakeit.Latitude()
 
 	// add 1/3 ints
 	for i := 0; i < d; i++ {
-		product[fmt.Sprintf("a%d", i)] = fmt.Sprintf("%d", rand.Int31n(100))
+		product[fmt.Sprintf("a%d", i)] = rand.Int31n(100)
 	}
 
 	// add 1/3 floats
 	for i := (d * 1); i < (d * 2); i++ {
-		product[fmt.Sprintf("a%d", i)] = fmt.Sprintf("%.2f", rand.Float32())
+		product[fmt.Sprintf("a%d", i)] = util.RoundFloat(rand.Float64(),2)
 	}
 
 	// add 1/3 strings plus any remainders
 	for i := (d * 2); i < (d*3)+r+1; i++ {
-		product[fmt.Sprintf("a%d", i)] = fmt.Sprintf("'%v'", util.RandomWord())
+		product[fmt.Sprintf("a%d", i)] = util.RandomWord()
 	}
 
-	return fmt.Sprintf("CREATE (p:product {%v})", util.MapToCypher(product))
+	return product
 }
 
-func linkProductToSite(productID, site int) string {
+func linkProductToSite(productID, site int) map[string]interface{} {
 	edge := make(map[string]interface{})
+	edge["from"] = productID
+	edge["to"] = site
+        var atts = make(map[string]interface{})
 	// add an int
-	edge["a1"] = fmt.Sprintf("%d", rand.Int31n(100))
+        atts["a1"] = rand.Int31n(100)
 
 	// add a float
-	edge["a2"] = fmt.Sprintf("%.2f", rand.Float32())
+        atts["a2"] = util.RoundFloat(rand.Float64(),2)
 
 	// add a string
-	edge["a3"] = fmt.Sprintf("'%v'", util.RandomWord())
+        atts["a3"] = util.RandomWord()
+	edge["atts"] = atts
 
-	return fmt.Sprintf("MATCH (p:product),(s:site) WHERE p.id=%v AND s.id=%v CREATE (p)-[r:cached {%v}]->(s)", productID, site, util.MapToCypher(edge))
+	return edge
 }
 
-func createProductEdge(productID, siteCount, productLinkage int) []string {
-	var edges []string
+func createProductEdge(productID, siteCount, productLinkage int) []map[string]interface{} {
+	var edges []map[string]interface{}
 	for len(edges) < productLinkage {
 		// get a random site
 		randomSite := rand.Intn(siteCount)

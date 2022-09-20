@@ -1,46 +1,48 @@
 package generator
 
 import (
-	"fmt"
 	"graphgen/util"
 	"math/rand"
 )
 
-// createSite generates a CREATE cypher command for a site
-func createSite(id int) string {
+// createSite generates data for a site
+func createSite(id int) map[string]interface{} {
 	site := make(map[string]interface{})
 
 	// add the site id
-	site["id"] = fmt.Sprintf("%v", id)
+	site["id"] = id
 
 	// add an int
-	site["a1"] = fmt.Sprintf("%d", rand.Int31n(100))
+	site["a1"] = rand.Int31n(100)
 
 	// add a float
-	site["a2"] = fmt.Sprintf("%.2f", rand.Float32())
+	site["a2"] = util.RoundFloat(rand.Float64(),2)
 
 	// add a string
-	site["a3"] = fmt.Sprintf("'%v'", util.RandomWord())
-
-	return fmt.Sprintf("CREATE (:site {%v})", util.MapToCypher(site))
+	site["a3"] = util.RandomWord()
+        return site
 }
 
-func linkSiteToSite(ss, ds int) string {
+func linkSiteToSite(ss, ds int) map[string]interface{} {
 	edge := make(map[string]interface{})
+	edge["from"] = ss
+	edge["to"] = ds
+        var atts = make(map[string]interface{})
 	// add an int
-	edge["a1"] = fmt.Sprintf("%d", rand.Int31n(100))
+	atts["a1"] = rand.Int31n(100)
 
 	// add a float
-	edge["a2"] = fmt.Sprintf("%.2f", rand.Float32())
+	atts["a2"] = util.RoundFloat(rand.Float64(),2)
 
 	// add a string
-	edge["a3"] = fmt.Sprintf("'%v'", util.RandomWord())
-
-	return fmt.Sprintf("MATCH (ss:site),(ds:site) WHERE ss.id=%v AND ds.id=%v CREATE (ss)-[r:connected {%v}]->(ds)", ss, ds, util.MapToCypher(edge))
+	atts["a3"] = util.RandomWord()
+	edge["atts"] = atts
+        return edge
 }
 
-func createSiteEdge(id, siteCount, linkage int) []string {
-	var edges []string
+//func createSiteEdge(id, siteCount, linkage int) []string {
+func createSiteEdge(id, siteCount, linkage int) []map[string]interface{} {
+	var edges []map[string]interface{}
 
 	for len(edges) < linkage {
 

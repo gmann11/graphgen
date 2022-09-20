@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"strings"
 )
 
 type WriterType uint8
@@ -15,12 +16,13 @@ const (
 
 // Writer returns a *GraphWriter
 type GraphWriter struct {
-	ch           chan string
+	ch           chan map[string]interface{}
 	wg           sync.WaitGroup
 	endpoint     string
 	batchSize    int
 	commandsSent uint32
 	Name         WriterType
+	cypher   string
 }
 
 func (w WriterType) String() string {
@@ -38,10 +40,11 @@ func (w WriterType) String() string {
 func NewGraphWriter(writer WriterType, batchSize int, endpoint string) *GraphWriter {
 	// create the channel
 	g := GraphWriter{
-		ch:        make(chan string),
+		ch:       make(chan map[string]interface{}),
 		batchSize: batchSize,
 		endpoint:  endpoint,
 		Name:      writer,
+		cypher: "",
 	}
 
 	// add the waitgroup
@@ -64,9 +67,12 @@ func (g *GraphWriter) Close() uint32 {
 	return g.commandsSent
 }
 
-func (g *GraphWriter) Write(messages []string) {
-	for _, message := range messages {
+func (g *GraphWriter) Write(cypher string, data []map[string]interface{}) {
+	if strings.Contains(cypher, "$") {
+	  g.ch <- map[string]interface{}{"cypher": cypher}
+        } 
+	for _, row := range data {
 		atomic.AddUint32(&g.commandsSent, 1)
-		g.ch <- message
-	}
+		g.ch <- row
+        }
 }

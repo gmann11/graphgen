@@ -5,21 +5,23 @@ import (
 )
 
 type CypherCommands struct {
-	SiteNodes    []string
-	SiteEdges    []string
-	ProductNodes []string
-	ProductEdges []string
-	Indexes      []string
+	SiteNodes    []map[string]interface{}
+	SiteEdges    []map[string]interface{}
+	ProductNodes []map[string]interface{}
+	ProductEdges []map[string]interface{}
+	Indexes      []map[string]interface{}
 }
 
 func NewCypherCommands() *CypherCommands {
 	fmt.Println("generating cypher commands in memory")
+        var cmds = []string{"CREATE INDEX IF NOT EXISTS FOR (s:site) ON (s.id)", "CREATE INDEX IF NOT EXISTS FOR (p:product) ON (p.id)", }
+	var ind []map[string]interface{}
+	for _, el := range cmds {
+          ind = append(ind,map[string]interface{}{"cypher":el}) 
+        } 
 
 	cc := CypherCommands{
-		Indexes: []string{
-			"CREATE INDEX FOR (s:site) ON (s.id)",
-			"CREATE INDEX FOR (p:product) ON (p.id)",
-		},
+		Indexes: ind,
 	}
 	return &cc
 }

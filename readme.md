@@ -40,7 +40,31 @@ Flags:
 run neo4j:
 
 ```sh
-docker run --rm -p 7474:7474 -p 7687:7687 --env NEO4J_AUTH=neo4j/test neo4j:latest
+#!/bin/bash
+
+export USID="$(id -u ${USER})" 
+export GRID="$(id -g ${USER})"
+export BASE="/home/ec2-user/work/jren/run/ce-db"
+PUBIP=`curl -s http://169.254.169.254/latest/meta-data/public-hostname`
+
+docker run \
+    -p7474:7474 -p7687:7687 \
+    -u $(id -u ${USER}):$(id -g ${USER}) \
+    -v $BASE/data:/data \
+    -v $BASE/logs:/logs \
+    -v $BASE/import:/var/lib/neo4j/import \
+    -v $BASE/plugins:/plugins \
+    --env NEO4J_AUTH=neo4j/password \
+    --env NEO4J_dbms_memory_pagecache_size=2G \
+    --env NEO4J_dbms_memory_heap_initial__size=2G \
+    --env NEO4J_dbms_memory_heap_max__size=2G \
+    --env NEO4J_dbms_connector_bolt_advertised__address=${PUBIP}:7687 \
+    --env NEO4J_dbms_connector_http_advertised__address=${PUBIP}:7474 \
+    --env NEO4J_dbms_security_procedures_unrestricted=apoc.* \
+    --env NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
+    --env NEO4J_dbms_logs_query_transaction__id.enabled=true \
+    --env NEO4J_dbms_logs_query_enabled=OFF \
+
 ```
 
 run redis:

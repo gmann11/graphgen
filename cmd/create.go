@@ -24,6 +24,25 @@ var createCmd = &cobra.Command{
 		redis, _ := cmd.Flags().GetBool("redis")
 		neo4j, _ := cmd.Flags().GetBool("neo4j")
 		redisep, _ := cmd.Flags().GetString("redisEndpoint")
+		siteCypher := `UNWIND $dict as row
+                  CREATE (p:site) 
+                  SET  p = row
+                  RETURN count(row)`
+		prodCypher := `UNWIND $dict as row
+                  CREATE (p:product)
+                  SET  p = row
+                  RETURN count(row)`
+	        siteRelCypher := `UNWIND $dict as row
+                  MATCH (t:site {id:row.to}), (f:site {id:row.from})
+		  CREATE (f)-[c:connected]->(t)
+		  SET c = row.atts
+		  RETURN count(row)`
+		siteProdRelCypher := `UNWIND $dict as row
+		  MATCH (p:product {id:row.from}),(s:site {id:row.to}) 
+		  CREATE (p)-[r:cached]->(s)
+		  SET r = row.atts
+		  RETURN count(row)`
+
 		neo4jep, _ := cmd.Flags().GetString("neo4jEndpoint")
 
 		fmt.Println("generating a graph with the following parameters")
@@ -67,18 +86,17 @@ var createCmd = &cobra.Command{
 			start := time.Now()
 
 			log.Println("running test for", gw.Name)
-			// add site nodes
 			log.Println("inserting indexes")
-			gw.Write(cc.Indexes)
+			gw.Write("",cc.Indexes)
 			log.Println("inserting site nodes")
-			gw.Write(cc.SiteNodes)
+			gw.Write(siteCypher, cc.SiteNodes)
 			log.Println("inserting product nodes")
-			gw.Write(cc.ProductNodes)
+			gw.Write(prodCypher, cc.ProductNodes)
 			log.Println("inserting site edges")
-			gw.Write(cc.SiteEdges)
+			gw.Write(siteRelCypher,cc.SiteEdges)
 			log.Println("inserting product edges")
-			gw.Write(cc.ProductEdges)
-			// finally
+			gw.Write(siteProdRelCypher,cc.ProductEdges)
+			//finally
 			results := gw.Close()
 			duration := time.Since(start)
 			eps := float64(results) / float64(duration.Seconds())
