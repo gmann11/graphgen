@@ -68,9 +68,14 @@ docker run \
     --name neo4j \
     neo4j:4.4.10-community
 ```
-
 run redis:
 
 ```sh
 docker run --rm -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
+```
+
+queries:
+```sh
+cd query
+go run ./main.go [add]
 ```

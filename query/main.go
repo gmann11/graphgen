@@ -62,7 +62,7 @@ func query(d neo4j.Driver, q []string) {
 func main() {
   args := os.Args[1:]
   d := driver()
-  if len(args) > 0 && args[0] == "app" {
+  if len(args) > 0 && args[0] == "add" {
     query(d, queries_add)
   } else {
     query(d, queries)
