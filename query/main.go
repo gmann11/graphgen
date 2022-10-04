@@ -10,7 +10,7 @@ var  queries = []string{
   "CALL apoc.warmup.run(true,true,true)",
   "MATCH (n) return count(n)",
   "MATCH (p:Product) WHERE p.a26='behavior' RETURN count(p)",
-  "MATCH (p:Product) WHERE p.country='US' RETURN count(p)",
+  "MATCH (p:Product) WHERE p.countryCode='US' RETURN count(p)",
   "MATCH (s:Site {id:0}),(d:Site {id:19}) RETURN shortestPath((s)-[:CONNECTED*]->(d))",
   `WITH point({longitude: 131.132813, latitude: 25.005979}) AS lowerLeft,
   point({longitude: -59.414063, latitude: 50.28933}) AS upperRight

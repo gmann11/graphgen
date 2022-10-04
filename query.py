@@ -11,7 +11,7 @@ queries = [
   "CALL apoc.warmup.run(true,true,true)",
   "MATCH (n) return count(n)",
   "MATCH (p:product) WHERE p.a26='herpes' RETURN count(p)",
-  "MATCH (p:product) WHERE p.country='US' RETURN count(p)",
+  "MATCH (p:product) WHERE p.countryCode='US' RETURN count(p)",
   "MATCH (s:site {id:0}),(d:site {id:19}) RETURN shortestPath((s)-[:connected*]->(d))",
   """
   WITH point({longitude: 131.132813, latitude: 25.005979}) AS lowerLeft,
