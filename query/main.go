@@ -9,18 +9,18 @@ import (
 var  queries = []string{
   "CALL apoc.warmup.run(true,true,true)",
   "MATCH (n) return count(n)",
-  "MATCH (p:Product) WHERE p.a26='behavior' RETURN count(p)",
-  "MATCH (p:Product) WHERE p.countryCode='US' RETURN count(p)",
-  "MATCH (s:Site {id:0}),(d:Site {id:19}) RETURN shortestPath((s)-[:CONNECTED*]->(d))",
+  "MATCH (p:product) WHERE p.a26='behavior' RETURN count(p)",
+  "MATCH (p:product) WHERE p.countryCode='US' RETURN count(p)",
+  "MATCH (s:site {id:0}),(d:site {id:19}) RETURN shortestPath((s)-[:CONNECTED*]->(d))",
   `WITH point({longitude: 131.132813, latitude: 25.005979}) AS lowerLeft,
   point({longitude: -59.414063, latitude: 50.28933}) AS upperRight
-  MATCH (p:Product) WHERE point.withinBBox(point({longitude: p.longitude, latitude:p.latitude}),lowerLeft, upperRight)
+  MATCH (p:product) WHERE point.withinBBox(point({longitude: p.longitude, latitude:p.latitude}),lowerLeft, upperRight)
   RETURN count(p)`,
-  `MATCH (p:Product) WHERE p.latitude > 25.005979 AND p.latitude < 50.28933
+  `MATCH (p:product) WHERE p.latitude > 25.005979 AND p.latitude < 50.28933
   AND p.longitude > -131.132813 AND p.longitude < -59.414063
   RETURN count(p)`,
-  "MATCH (p:Product) RETURN avg(p.a10)",
-  `MATCH (p:Product) WHERE point.withinBBox(p.geo,
+  "MATCH (p:product) RETURN avg(p.a10)",
+  `MATCH (p:product) WHERE point.withinBBox(p.geo,
    point({longitude: 131.132813, latitude: 25.005979}), point({longitude: -59.414063, latitude: 50.280933}))
    RETURN count(p)`,
   }
@@ -62,7 +62,7 @@ func query(d neo4j.Driver, q []string) {
 func main() {
   args := os.Args[1:]
   d := driver()
-  if len(args) > 0 && args[0] == "add" {
+  if len(args) > 0 && args[0] == "app" {
     query(d, queries_add)
   } else {
     query(d, queries)
